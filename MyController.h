@@ -15,7 +15,7 @@
 - (void) saveDataToDisk;
 - (void) loadDataFromDisk;
 - (int) keyCodeForKeyString:(char *)keyString;
-- (void) midiConvert: (MIDIPacket *)packet endpoint:(MIDIPortRef *)ep;
+- (void) midiConvert: (MIDIPacket *)packet endpoint:(MIDIPortRef *)ep isDown:(bool)isDown;
 
 @end
 

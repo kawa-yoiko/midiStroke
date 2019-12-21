@@ -107,7 +107,15 @@
     [self setStartNotes: [rootObject valueForKey:@"startNotes"]];
 }
 
-- (void) midiConvert: (MIDIPacket *)packet endpoint:(MIDIPortRef *)ep {	
+static inline void sendEvent(int theLetter, CGEventFlags flags, bool isDown)
+{
+    CGEventRef evt = CGEventCreateKeyboardEvent( NULL, (CGKeyCode)theLetter, isDown);
+    CGEventSetFlags(evt, (flags | CGEventGetFlags(evt)));
+    CGEventPost(kCGHIDEventTap, evt);
+    CFRelease(evt);
+}
+
+- (void) midiConvert: (MIDIPacket *)packet endpoint:(MIDIPortRef *)ep isDown:(bool)isDown {	
 	int i, j;
 	BOOL cc = false;
 	int pcktStart = packet->data[0];
@@ -116,8 +124,9 @@
 	int packetStart = packet->data[0];		// remembers original type and channel of message before altering
 	if ((packetStart>>4) == 0x0b) { cc = true; }
 	
-	//printf("the channel is: %i \n", channel);
-	//printf("the note is: %i \n", packet->data[1]);
+	// printf("the channel is: %i \n", channel);
+	// printf("the note is: %i \n", packet->data[1]);
+	// printf("is down: %s \n", isDown ? "true" : "false");
 	
 	for (i=0; i<[_startNotes count]; i++) {	
 		StartNote *sn = [_startNotes objectAtIndex:i];						// creates a startNote object for each item in list
@@ -135,8 +144,6 @@
                             int theLetter = [self keyCodeForKeyString:charString];
 
                             CGEventFlags flags = 0;
-                            CGEventRef down = CGEventCreateKeyboardEvent( NULL, (CGKeyCode)theLetter, true);
-                            CGEventRef up = CGEventCreateKeyboardEvent( NULL, (CGKeyCode)theLetter, false);
                             
                             if ([[eprop objectForKey: @"apple"] intValue] == 1) {
                                 flags = flags | kCGEventFlagMaskCommand;
@@ -151,13 +158,7 @@
                                 flags = flags | kCGEventFlagMaskControl;
                             }
                             
-                            CGEventSetFlags(down, (flags | CGEventGetFlags(down)));
-                            CGEventPost(kCGHIDEventTap, down);
-                            CFRelease(down);
-                            
-                            CGEventSetFlags(up, (flags | CGEventGetFlags(up)));
-                            CGEventPost(kCGHIDEventTap, up);
-                            CFRelease(up);
+                            sendEvent(theLetter, flags, isDown);
                         });
 					}
 				}
